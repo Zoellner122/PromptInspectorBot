@@ -14,16 +14,7 @@ from types import MappingProxyType
 from typing import Any, Sequence
 
 import toml
-from discord import (
-    ApplicationContext,
-    Attachment,
-    ButtonStyle,
-    Embed,
-    File,
-    Intents,
-    Message,
-    RawReactionActionEvent,
-)
+from discord import Intents, Embed, ButtonStyle, Message, Attachment, File, RawReactionActionEvent, ApplicationContext
 from discord.ext import commands
 from discord.ui import View, button
 from dotenv import load_dotenv
