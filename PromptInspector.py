@@ -544,7 +544,7 @@ async def update_reactions(message: Message, count: int):
         await message.add_reaction("🔎")
     elif CFG.react_on_no_metadata:
         await message.add_reaction("⛔")
-
+    await message.add_reaction("❤")
 
 @client.event
 async def on_ready():
@@ -577,7 +577,6 @@ async def on_message(message: Message):
             break
     await update_reactions(message, count)
 
-
 @client.event
 async def on_raw_reaction_add(ctx: RawReactionActionEvent):
     """Send image metadata in reacted post to user DMs"""
@@ -601,7 +600,6 @@ async def on_raw_reaction_add(ctx: RawReactionActionEvent):
             await user_dm.send(embed=embed, view=view, mention_author=False)
             count += 1
     await update_reactions(message, count)
-
 
 @client.message_command(name="View Prompt")
 async def message_command_view_prompt(ctx: ApplicationContext, message: Message):
