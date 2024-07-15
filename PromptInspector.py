@@ -560,6 +560,7 @@ async def on_message(message: Message):
         or message.author.bot
     ):
         return
+    await add_heartboard(message)
     attachments = [
         a
         for a in message.attachments
