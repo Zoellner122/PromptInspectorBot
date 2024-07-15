@@ -545,6 +545,9 @@ async def update_reactions(message: Message, count: int):
     elif CFG.react_on_no_metadata:
         await message.add_reaction("⛔")
 
+async def add_heartboard(message: Message):
+    await message.add_reaction("❤")
+
 @client.event
 async def on_ready():
     log.info(__f("Logged in as {user}!", user=client.user))
