@@ -487,10 +487,14 @@ def populate_attachment_metadata(
         ii = img.info
         if "Steps:" in ii.get("parameters", ""):
             # Has Steps in paramaters field, looks like A1111 format
-            metadata[i] = MetadataA1111(ii["parameters"])
+            md = MetadataA1111(ii["parameters"])
+            if md.params:
+                metadata[i] = md
         elif ii.get("prompt", "").lstrip().startswith('{"'):
             # (Apparent) JSON data in prompt field, looks like ComfyUI format
-            metadata[i] = MetadataComfyUI(ii["prompt"], ii.get("workflow"))
+            md = MetadataComfyUI(ii["prompt"], ii.get("workflow"))
+            if md.params:
+                metadata[i] = md
         #
         # NovelAI NYI
         # elif img.info.get("Software") == "NovelAI" and "Description" in img.info:
@@ -593,7 +597,7 @@ async def on_raw_reaction_add(ctx: RawReactionActionEvent):
     if (
         ctx.emoji.name != "🔎"
         or ctx.channel_id not in CFG.monitored_channel_ids
-        or ctx.member.bot
+        or getattr(ctx.member, "bot", False)
     ):
         return
     channel = client.get_channel(ctx.channel_id)
