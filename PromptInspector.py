@@ -14,7 +14,7 @@ from types import MappingProxyType
 from typing import Any, Sequence
 
 import toml
-from discord import Intents, Embed, ButtonStyle, Message, Attachment, File, RawReactionActionEvent, ApplicationContext
+from discord import Intents, Embed, ButtonStyle, Message, Attachment, File, RawReactionActionEvent, ApplicationContext, HTTPException
 from discord.ext import commands
 from discord.ui import View, button
 from dotenv import load_dotenv
@@ -444,7 +444,7 @@ class MetadataComfyUI(Metadata):
         if result is None:
             result = OrderedDict()
         for k, v in promptdata.items():
-            inputs = v.get("inputs").copy()
+            inputs = (v.get("inputs") or {}).copy()
             typ = v.get("class_type", "").strip()
             handler = handlers.get(typ.lower())
             if not inputs or not handler:
@@ -463,13 +463,13 @@ class MetadataComfyUI(Metadata):
                     title = v.get("_meta", {}).get("title", None)
                     if isinstance(title, str):
                         title = title.strip()
-                    if title == typ:
+                    if title == typ or not title:
                         title = None
                 else:
                     title = None
                 name = (
                     f"{typ}.{k} - {title.strip()}"
-                    if isinstance(title, str)
+                    if title is not None
                     else f"{typ}.{k}"
                 )
                 cls.set_comfy_input(result, name, input_name, inputs, required_type)
@@ -519,7 +519,7 @@ async def collect_attachments(
     if respond:
         await ctx.defer(ephemeral=True)
     attachments = [
-        a for a in message.attachments if a.filename.lower().endswith(".png")
+        a for a in message.attachments if a.filename.lower().endswith(".png") and a.size < CFG.scan_limit_bytes
     ]
     if not attachments:
         if respond:
@@ -542,10 +542,17 @@ async def collect_attachments(
 
 
 async def update_reactions(message: Message, count: int):
-    if count > 0:
-        await message.add_reaction("🔎")
-    elif CFG.react_on_no_metadata:
-        await message.add_reaction("⛔")
+    with contextlib.suppress(HTTPException):
+        if count > 0:
+            await message.add_reaction("🔎")
+        elif CFG.react_on_no_metadata:
+            await message.add_reaction("⛔")
+
+
+async def add_heartboard(message: Message):
+    with contextlib.suppress(HTTPException):
+        await message.add_reaction("❤")
+
 
 @client.event
 async def on_ready():
@@ -559,6 +566,7 @@ async def on_message(message: Message):
         or message.author.bot
     ):
         return
+    await add_heartboard(message)
     attachments = [
         a
         for a in message.attachments
@@ -569,7 +577,7 @@ async def on_message(message: Message):
     log.info(__f("MESSAGE: {0!r}", message))
     count = 0
     for i, attachment in enumerate(
-        attachments,
+        attachments
     ):  # download one at a time as usually the first image is already ai-generated
         metadata = OrderedDict()
         await read_attachment_metadata(i, attachment, metadata)
@@ -577,6 +585,7 @@ async def on_message(message: Message):
             count += 1
             break
     await update_reactions(message, count)
+
 
 @client.event
 async def on_raw_reaction_add(ctx: RawReactionActionEvent):
