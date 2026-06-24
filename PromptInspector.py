@@ -180,9 +180,10 @@ class Metadata:
             value = embed_dict.get(key)
             if value is None:
                 continue
+            value_str = value if len(value) <= 1024 else value[:1021] + "..."
             embed.add_field(
                 name=key,
-                value=value,
+                value=value_str,
                 inline=self.ALLOW_INLINE_EMBEDS
                 and "Prompt" not in key
                 and len(value) < 32,
@@ -192,9 +193,10 @@ class Metadata:
         for key, value in embed_dict.items():
             if count >= CFG.message_embed_limit:
                 break
+            value_str = value if len(value) <= 1024 else value[:1021] + "..."
             embed.add_field(
                 name=key,
-                value=value,
+                value=value_str,
                 inline=self.ALLOW_INLINE_EMBEDS
                 and "Prompt" not in key
                 and len(value) < 32,
