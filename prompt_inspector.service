@@ -1,0 +1,25 @@
+[Unit]
+Description=Prompt Inspector Discord Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust User/Group and paths to match your deployment
+User=promptinspector
+Group=promptinspector
+WorkingDirectory=/opt/prompt-inspector
+ExecStart=/opt/prompt-inspector/venv/bin/python PromptInspector.py -c /opt/prompt-inspector/config.toml
+Restart=on-failure
+RestartSec=10s
+# BOT_TOKEN can live in .env (loaded by python-dotenv) or be set here:
+# Environment=BOT_TOKEN=your-token-here
+# Or point to a separate env file:
+# EnvironmentFile=/opt/prompt-inspector/.env
+
+# Harden the service
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
