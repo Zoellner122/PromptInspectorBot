@@ -143,24 +143,26 @@ class InspectAttachmentView(View):
 
 class Metadata:
     NAME = "Unknown"
+    CONTENT_TYPE = "text/plain"
+    EXTENSION = "txt"
     ALLOW_INLINE_EMBEDS = True
 
     def __init__(self, s):
         self.text_metadata = s
         self.params = self.get_params_from_string(s)
 
-    def get_params_from_string(*args: Sequence[Any], **kwargs: dict[Any, Any]):
+    def get_params_from_string(self, *args: Sequence[Any], **kwargs: dict[Any, Any]):
         raise NotImplementedError
 
     def get_embed_view(self, msg_ctx: Message, attachment=None, ephemeral=False):
         embed = self.get_embed(msg_ctx, attachment=attachment)
-        if ephemeral:
-            view = InspectAttachmentView(
-                text_metadata=self.text_metadata,
-                ephemeral=True,
-            )
-        else:
-            view = InspectAttachmentView(text_metadata=self.text_metadata)
+        kwargs = {"ephemeral": True} if ephemeral else {}
+        view = InspectAttachmentView(
+            text_metadata=self.text_metadata,
+            content_type=self.CONTENT_TYPE,
+            content_extension=self.EXTENSION,
+            **kwargs,
+        )
         return embed, view
 
     def get_embed(
@@ -238,11 +240,11 @@ class MetadataA1111(Metadata):
             output_dict["Negative Prompt"] = neg_parts[1].strip()
         else:
             output_dict["Prompt"] = prompts.strip()
-        params = params.split(", ")
-        for param in params:
-            params = param.split(": ", 1)
-            if len(params) == 2:
-                output_dict[params[0].strip()] = params[1].strip()
+        param_list = params.split(", ")
+        for param in param_list:
+            kv = param.split(": ", 1)
+            if len(kv) == 2:
+                output_dict[kv[0].strip()] = kv[1].strip()
         for k, v in output_dict.items():
             if len(v) > max_prompt:
                 output_dict[k] = v[:max_prompt] + "..."
@@ -252,7 +254,7 @@ class MetadataA1111(Metadata):
 class MetadataComfyUI(Metadata):
     NAME = "ComfyUI"
     CONTENT_TYPE = "application/json"
-    EXTENSION = ".json"
+    EXTENSION = "json"
     ALLOW_INLINE_EMBEDS = False
 
     # This is just a read-only dict.
@@ -545,9 +547,6 @@ async def update_reactions(message: Message, count: int):
     elif CFG.react_on_no_metadata:
         await message.add_reaction("⛔")
 
-async def add_heartboard(message: Message):
-    await message.add_reaction("❤")
-
 @client.event
 async def on_ready():
     log.info(__f("Logged in as {user}!", user=client.user))
@@ -596,7 +595,7 @@ async def on_raw_reaction_add(ctx: RawReactionActionEvent):
     metadata, attachments = await collect_attachments(ctx, message, respond=False)
     count = 0
     if metadata:
-        user_dm = await client.get_user(ctx.user_id).create_dm()
+        user_dm = await (await client.fetch_user(ctx.user_id)).create_dm()
         for attachment, md in ((attachments[i], data) for i, data in metadata.items()):
             embed, view = md.get_embed_view(message, attachment)
             await user_dm.send(embed=embed, view=view, mention_author=False)
@@ -685,7 +684,7 @@ class ColorLogFormatter(logging.Formatter):
     ):
         super().__init__(
             fmt=fmt,
-            datefmt="%Y%m%d.%H%M%S",
+            datefmt=datefmt,
             style="{",
         )
         if use_color:
