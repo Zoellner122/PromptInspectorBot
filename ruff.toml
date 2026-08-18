@@ -1,34 +1,76 @@
+# Oldest interpreter the project supports; keep in sync with
+# `requires-python` in pyproject.toml.
+target-version = "py311"
+# Matches the existing wrapping in PromptInspector.py. Overlong lines that
+# would hurt readability if split (URLs, the discord import) are covered by
+# the E501 ignore below.
+line-length = 88
+
 [lint]
+select = ["ALL"]
 ignore = [
+    # Missing type annotations. Annotations are added where they aid the reader
+    # rather than exhaustively.
     "ANN001",
-    "ANN101",
-    "ANN102",
+    "ANN002",
+    "ANN003",
     "ANN201",
     "ANN202",
     "ANN204",
     "ANN206",
-    "C901",
+    # Missing docstrings. The module is small enough to read directly.
     "D100",
     "D101",
     "D102",
     "D103",
     "D104",
     "D107",
+    "D203",
     "D211",
     "D213",
-    "E402",
-    "E501",
-    "EM101",
+    # Boolean positional arguments. Used deliberately in the formatter/config API.
+    "FBT001",
+    "FBT002",
+    # Housekeeping notes that should not fail a build.
     "ERA001",
-    "F403",
-    "F405",
+    "FIX002",
+    "TD002",
+    "TD003",
+    # No per-file copyright headers; the repo has a LICENSE.
+    "CPY001",
+    # Single-module project, not an importable package.
+    "INP001",
+    # Complexity and argument-count limits. The metadata handlers are naturally
+    # long, table-driven functions.
+    "C901",
     "PLR0912",
     "PLR0913",
     "PLR0915",
+    "PLR0917",
     "PLR2004",
+    # Misc. style choices that conflict with how this file is written.
+    "E402",
+    "E501",
+    "EM101",
+    "EM102",
     "T201",
     "TRY003",
     "N802",
     "N999",
+    # Conflicts with the formatter.
+    "COM812",
+    "ISC001",
 ]
-select = ["ALL"]
+
+[lint.per-file-ignores]
+"tests/*" = [
+    "S101",    # asserts are the point of a test
+    "PLC0415", # local imports keep test helpers close to their use
+    "PT019",   # the `pi` module fixture is not a value fixture
+    "ANN",
+    "D",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
