@@ -1,5 +1,8 @@
 MONITORED_CHANNEL_IDS = [1234]
-SCAN_LIMIT_BYTES = 104857600 # 10MiB
+SCAN_LIMIT_BYTES = 10485760 # 10 MiB
+# Attachment extensions to inspect. PNG carries metadata in text chunks;
+# JPEG/WebP carry it in Exif. Add "avif" if your Pillow build supports it.
+SCAN_EXTENSIONS = ["png", "jpg", "jpeg", "webp"]
 A1111_IMPORTANT_FIELDS = [
     "Prompt",
     "Negative Prompt",
@@ -22,6 +25,9 @@ COMFYUI_EXTRACT_WIDGET_VALUES=true
 COMFYUI_PRIORITIZE_NODES_WITH_TEXT=true
 COMFYUI_REPLACE_FIELD_NEWLINES=true
 MESSAGE_EMBED_LIMIT=25
+# Metadata longer than this many characters is sent as a file attachment
+# instead of an inline code block. Content that cannot be shown inline at
+# all (because it contains a ``` fence) is always sent as a file.
 ATTACH_FILE_SIZE_THRESHOLD=1980
 REACT_ON_NO_METADATA=false
 LOG_COLOR=false
