@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install ruff
+        run: pip install "ruff>=0.16"
+      - name: Lint
+        run: ruff check --output-format=github .
+      - name: Check formatting
+        run: ruff format --check --diff .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Lower bound is `requires-python`; upper bound is the newest release
+        # py-cord supports. A failure here means a dependency has drifted.
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install the package and dev dependencies
+        run: pip install -e ".[dev]"
+      - name: Run tests
+        run: pytest
+      - name: Smoke test the metadata dump CLI
+        run: |
+          python - <<'PY'
+          from PIL import Image, PngImagePlugin
+          img = Image.new("RGB", (8, 8), "red")
+          info = PngImagePlugin.PngInfo()
+          info.add_text(
+              "parameters",
+              "a smoke test\nNegative prompt: nope\n"
+              "Steps: 20, Sampler: Euler a, CFG scale: 7, Seed: 1",
+          )
+          img.save("smoke.png", pnginfo=info)
+          PY
+          cp config.example.toml config.toml
+          prompt-inspector -c config.toml -d smoke.png | tee dump.txt
+          grep -q "a smoke test" dump.txt
+          grep -q "Euler a" dump.txt

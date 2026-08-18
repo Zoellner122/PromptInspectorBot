@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prompt-inspector"
+version = "0.2.0"
+description = "Inspect Stable Diffusion generation prompts from images uploaded to Discord"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "py-cord>=2.8,<3",
+    "Pillow>=11.3,<13",
+    "python-dotenv>=1.1,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.16",
+]
+
+[project.scripts]
+prompt-inspector = "PromptInspector:main"
+
+[project.urls]
+Homepage = "https://github.com/Zoellner122/PromptInspectorBot"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["PromptInspector.py"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "PromptInspector.py",
+    "config.example.toml",
+    "prompt_inspector.service",
+    "requirements.txt",
+    "ruff.toml",
+    "tests",
+    "README.md",
+    "LICENSE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -4,3 +4,14 @@ venv
 *.bak
 *~
 config.toml
+
+# Python build / cache artifacts
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
